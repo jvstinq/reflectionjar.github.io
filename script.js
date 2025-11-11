@@ -151,3 +151,69 @@ document.getElementById("submitBtn").addEventListener("click", () => {
   document.getElementById("reflectionText").value = "";
   document.getElementById("popup").style.display = "none";
 });
+
+// === TOKEN + SHOP SUPPORT (ADDED) ===
+
+// Shared keys
+const RJ_TOKEN_KEY = "rj_tokens";
+const RJ_INVENTORY_KEY = "rj_inventory";
+
+// How many reflections exist (drives initial tokens)
+function rjGetReflectionCount() {
+  try {
+    const arr = JSON.parse(localStorage.getItem("reflections") || "[]");
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+function rjGetTokens() {
+  const stored = parseInt(localStorage.getItem(RJ_TOKEN_KEY), 10);
+  if (Number.isNaN(stored)) {
+    const initial = rjGetReflectionCount();
+    localStorage.setItem(RJ_TOKEN_KEY, String(initial));
+    return initial;
+  }
+  return stored;
+}
+
+function rjSetTokens(val) {
+  const safe = Math.max(0, val | 0);
+  localStorage.setItem(RJ_TOKEN_KEY, String(safe));
+  return safe;
+}
+
+// Keep tokens in sync with reflections (1 token per reflection by default)
+function rjSyncTokensWithReflections() {
+  const reflectionCount = rjGetReflectionCount();
+  const current = parseInt(localStorage.getItem(RJ_TOKEN_KEY), 10);
+
+  if (Number.isNaN(current) || reflectionCount > current) {
+    rjSetTokens(reflectionCount);
+  }
+}
+
+// Run once on main page load
+window.addEventListener("DOMContentLoaded", () => {
+  if (localStorage.getItem(RJ_TOKEN_KEY) === null) {
+    rjSetTokens(rjGetReflectionCount());
+  } else {
+    rjSyncTokensWithReflections();
+  }
+});
+
+// When submit is clicked, your original handler runs first,
+// then this extra listener syncs tokens based on new reflections.
+document.getElementById("submitBtn").addEventListener("click", () => {
+  // Small delay so the previous handler can write to localStorage
+  setTimeout(rjSyncTokensWithReflections, 50);
+});
+
+// Hook up existing Shop button -> Shop scene
+const shopBtnEl = document.getElementById("shopBtn");
+if (shopBtnEl) {
+  shopBtnEl.addEventListener("click", () => {
+    window.location.href = "shop.html";
+  });
+}
