@@ -52,24 +52,26 @@ Runner.run(runner, engine);
 // --- JAR WALLS ---
 const leftWall = Bodies.rectangle(94, 200, 10, 350, { isStatic: true, render: {visible: false} });
 const rightWall = Bodies.rectangle(355, 200, 10, 350, { isStatic: true, render: {visible: false}});
+//const bottom = Bodies.rectangle(230, 400, 340, 10, { isStatic: true });
 World.add(world, [leftWall, rightWall]);
 
 // --- CURVED BOTTOM (approximation using small static circles) ---
-const curveSegments = 30;
-const curveRadius = 160;
-const centerX = 226;
-const bottomY = 358;
+const curveSegments = 30;   // increase for smoother curve
+const curveRadius = 160;    // how wide the curve is
+const centerX = 226;        // align with jar center
+const bottomY = 358;        // base Y near the bottom wall
 
 const curveBodies = [];
 for (let i = 0; i <= curveSegments; i++) {
-  const angle = Math.PI * (i / curveSegments);
+  const angle = Math.PI * (i / curveSegments); // 180° arc
   const x = centerX + Math.cos(angle) * curveRadius * 0.8;
-  const y = bottomY + Math.sin(angle) * 40;
+  const y = bottomY + Math.sin(angle) * 40; // scale Y to flatten curve
   const circle = Bodies.circle(x, y, 8, { isStatic: true, render: {visible: false} });
   curveBodies.push(circle);
 }
 
 World.add(world, curveBodies);
+
 
 // --- MOUSE HANDLING ---
 const mouse = Mouse.create(render.canvas);
@@ -87,13 +89,14 @@ const tokens = [];
 
 // --- TOKEN CREATION ---
 function createToken(dateStr, reflectionData) {
-  const xPos = 230 + (Math.random() - 0.5) * 100;
+  const xPos = 230 + (Math.random() - 0.5) * 100; // spawn near jar center
   const token = Bodies.circle(xPos, 0, 20, {
     restitution: 0.5,
     friction: 0.1,
-    render: { fillStyle: "#FFD700" },
+    render: { fillStyle: "#FFD700" }, // gold color
   });
 
+  // Attach reflection data to the token
   token.plugin = { reflection: reflectionData };
   token.label = dateStr;
 
@@ -106,6 +109,8 @@ function createToken(dateStr, reflectionData) {
 // --- CLICK EVENT (shared for all tokens) ---
 Events.on(mouseConstraint, "mousedown", (event) => {
   const mousePosition = event.mouse.position;
+
+  // Query all tokens to see if the mouse is clicking one
   const clicked = Query.point(tokens, mousePosition);
 
   if (clicked.length > 0) {
@@ -179,11 +184,30 @@ function rjSetTokens(val) {
   return safe;
 }
 
+// Keep tokens in sync with reflections (1 token per reflection by default)
+function rjSyncTokensWithReflections() {
+  const reflectionCount = rjGetReflectionCount();
+  const current = parseInt(localStorage.getItem(RJ_TOKEN_KEY), 10);
+
+  if (Number.isNaN(current) || reflectionCount > current) {
+    rjSetTokens(reflectionCount);
+  }
+}
+
 // Run once on main page load
 window.addEventListener("DOMContentLoaded", () => {
   if (localStorage.getItem(RJ_TOKEN_KEY) === null) {
     rjSetTokens(rjGetReflectionCount());
+  } else {
+    rjSyncTokensWithReflections();
   }
+});
+
+// When submit is clicked, your original handler runs first,
+// then this extra listener syncs tokens based on new reflections.
+document.getElementById("submitBtn").addEventListener("click", () => {
+  // Small delay so the previous handler can write to localStorage
+  setTimeout(rjSyncTokensWithReflections, 50);
 });
 
 // Hook up existing Shop button -> Shop scene
@@ -191,26 +215,5 @@ const shopBtnEl = document.getElementById("shopBtn");
 if (shopBtnEl) {
   shopBtnEl.addEventListener("click", () => {
     window.location.href = "shop.html";
-  });
-}
-
-// === TOKEN UPDATE ON REFLECTION SUBMIT ===
-if (localStorage.getItem(RJ_TOKEN_KEY) === null) {
-  localStorage.setItem(RJ_TOKEN_KEY, "0");
-}
-
-const submitBtn = document.getElementById("submitBtn");
-if (submitBtn) {
-  submitBtn.addEventListener("click", () => {
-    setTimeout(() => {
-      let tokens = parseInt(localStorage.getItem(RJ_TOKEN_KEY), 10) || 0;
-      tokens += 1;
-      localStorage.setItem(RJ_TOKEN_KEY, tokens);
-
-      const tokenDisplay = document.getElementById("tokenDisplayMain");
-      if (tokenDisplay) {
-        tokenDisplay.textContent = `Tokens: ${tokens}`;
-      }
-    }, 100);
   });
 }
