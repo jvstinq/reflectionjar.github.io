@@ -320,3 +320,14 @@ textarea {
   margin: 4px 0 6px;
   font-weight: 500;
 }
+
+.token-display-main {
+  position: absolute;
+  top: 120px;
+  left: 250px;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: bold;
+  color: #023047;
+}
