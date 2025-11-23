@@ -1,3 +1,7 @@
+window.addEventListener("storage", () => {
+  updateTotalTokensDisplay();
+});
+
 // --- POPUP OPEN/CLOSE LOGIC ---
 document.getElementById("writeBtn").addEventListener("click", () => {
   document.getElementById("popup").style.display = "flex";
@@ -127,15 +131,20 @@ World.add(world, mouseConstraint);
 const tokens = [];
 
 // --- TOKEN CREATION ---
-function createToken(dateStr, reflectionData) {
-  const xPos = 230 + (Math.random() - 0.5) * 100; // spawn near jar center
+function createToken(dateStr, reflectionData, colorType = "gold") {
+  const xPos = 230 + (Math.random() - 0.5) * 100;
+
+  const colorMap = {
+    gold: "#FFD700",
+    silver: "#C0C0C0"
+  };
+
   const token = Bodies.circle(xPos, 0, 20, {
     restitution: 0.5,
     friction: 0.1,
-    render: { fillStyle: "#FFD700" }, // gold color
+    render: { fillStyle: colorMap[colorType] || "#FFD700" }
   });
 
-  // Attach reflection data to the token
   token.plugin = { reflection: reflectionData };
   token.label = dateStr;
 
@@ -205,125 +214,66 @@ document.getElementById("submitBtn").addEventListener("click", () => {
   const reflectionText = document.getElementById("reflectionText").value.trim();
   if (!reflectionText) return;
 
-  //streak logic
-  //const today = new Date().toISOString().split("T")[0];
-
-  //testing purpose (changing the date manually)
-  let today = "2025-11-21";
-
-  //Streak logic
+  const today = new Date().toISOString().split("T")[0];
   const lastDate = localStorage.getItem("lastDate");
-  const last = lastDate ? lastDate : null;
+  const isFirstToday = (lastDate !== today);
 
-  if (!last) {//first entry ever
-    streak = 1;
-  } else if (last === today) {//streak unchanged
-    console.log("Multiple entries today — streak stays:", streak);
-  } else {//compute difference between the dates
-    const lastD = new Date(last);
-    const todayD = new Date(today);
-
-    const diffTime = todayD - lastD;
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-
-    if (diffDays === 1) {//next day: streak increases
-      streak++;
-    } else if (diffDays > 1) {//missed days: reset streak
+  // --- Handle streak ---
+  if (isFirstToday) {
+    if (!lastDate) {
       streak = 1;
+    } else {
+      const last = new Date(lastDate);
+      const now = new Date(today);
+      const diffDays = (now - last) / (1000 * 60 * 60 * 24);
+
+      if (diffDays === 1) {
+        streak++;
+      } else {
+        streak = 1;
+      }
     }
   }
 
-  // --- CREATE TOKEN
-  const dateStr = new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" });
-  const reflectionData = { prompt: "Free write", text: reflectionText };
+  // --- Token calculation ---
+  let tokenColor;
+  let earnedTokens = 0;
 
-  createToken(dateStr, reflectionData);
-
-  //token logic
-  if (last !== today) {
-    // First submission of the day earns tokens
+  if (isFirstToday) {
     bonusTokens = Math.floor(streak / 2);
     earnedTokens = 1 + bonusTokens;
     totalTokens += earnedTokens;
+    tokenColor = "gold";
   } else {
-    console.log("Multiple entries today — no extra tokens awarded.");
+    tokenColor = "silver";  // no currency
   }
 
-  // Save reflection to localStorage
+  // --- Create token visually ---
+  const dateStr = new Date().toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit"
+  });
+
+  const reflectionData = { prompt: "Free write", text: reflectionText };
+
+  createToken(dateStr, reflectionData, tokenColor);
+
+  // --- Save reflection ---
   const reflections = JSON.parse(localStorage.getItem("reflections") || "[]");
   reflections.push({ date: dateStr, text: reflectionText });
   localStorage.setItem("reflections", JSON.stringify(reflections));
 
-  //save to storage
+  // --- Save tokens + streak ---
   localStorage.setItem("streak", streak);
   localStorage.setItem("lastDate", today);
   localStorage.setItem("bonusTokens", bonusTokens);
   localStorage.setItem("totalTokens", totalTokens);
 
-  //update display
   updateStreakDisplay();
   updateTotalTokensDisplay();
 
   document.getElementById("reflectionText").value = "";
   document.getElementById("popup").style.display = "none";
-});
-
-// === TOKEN + SHOP SUPPORT (ADDED) ===
-
-// Shared keys
-const RJ_TOKEN_KEY = "rj_tokens";
-const RJ_INVENTORY_KEY = "rj_inventory";
-
-// How many reflections exist (drives initial tokens)
-function rjGetReflectionCount() {
-  try {
-    const arr = JSON.parse(localStorage.getItem("reflections") || "[]");
-    return Array.isArray(arr) ? arr.length : 0;
-  } catch (e) {
-    return 0;
-  }
-}
-
-function rjGetTokens() {
-  const stored = parseInt(localStorage.getItem(RJ_TOKEN_KEY), 10);
-  if (Number.isNaN(stored)) {
-    const initial = rjGetReflectionCount();
-    localStorage.setItem(RJ_TOKEN_KEY, String(initial));
-    return initial;
-  }
-  return stored;
-}
-
-function rjSetTokens(val) {
-  const safe = Math.max(0, val | 0);
-  localStorage.setItem(RJ_TOKEN_KEY, String(safe));
-  return safe;
-}
-
-// Keep tokens in sync with reflections (1 token per reflection by default)
-function rjSyncTokensWithReflections() {
-  const reflectionCount = rjGetReflectionCount();
-  const current = parseInt(localStorage.getItem(RJ_TOKEN_KEY), 10);
-
-  if (Number.isNaN(current) || reflectionCount > current) {
-    rjSetTokens(reflectionCount);
-  }
-}
-
-// Run once on main page load
-window.addEventListener("DOMContentLoaded", () => {
-  if (localStorage.getItem(RJ_TOKEN_KEY) === null) {
-    rjSetTokens(rjGetReflectionCount());
-  } else {
-    rjSyncTokensWithReflections();
-  }
-});
-
-// When submit is clicked, your original handler runs first,
-// then this extra listener syncs tokens based on new reflections.
-document.getElementById("submitBtn").addEventListener("click", () => {
-  // Small delay so the previous handler can write to localStorage
-  setTimeout(rjSyncTokensWithReflections, 50);
 });
 
 // Hook up existing Shop button -> Shop scene

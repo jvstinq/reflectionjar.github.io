@@ -20,12 +20,12 @@
         "heading": "🌱 Daily Reflections",
         "items": [
           "Write as many reflections as you want each day.",
-          "Only the first submission counts toward streak and tokens.",
-          "Option for free-write or guided prompt"
+          "Only the first submission counts toward your streak and earns tokens.",
+          "There's an option for free-write or guided prompt"
         ]
       },
       {
-        "heading": "🔥 Streak Rules",
+        "heading": "🔥 Streak",
         "items": [
           "Streak increases once per day.",
           "Bonus tokens given every 2 streak days.",
@@ -33,10 +33,10 @@
         ]
       },
       {
-        "heading": "🪙 Tokens",
+        "heading": "💰 Tokens",
         "items": [
           "Earn tokens on your first reflection of the day.",
-          "Tokens are used to buy cosmetic in shop."
+          "Tokens are used to buy cosmetics in shop."
         ]
       },
       {
