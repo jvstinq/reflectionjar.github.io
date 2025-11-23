@@ -153,7 +153,7 @@ function createTokenVisual(displayDate, reflectionData, colorType = "gold", isHi
   const xPos = 230 + (Math.random() - 0.5) * 100;
   const colorMap = { gold: "#FFD700", silver: "#C0C0C0" };
 
-  const radius = colorType === "gold" ? 16 : 14;
+  const radius = 18;
   const yPos = isHistory ? (300 + Math.random() * 40) : -40; // off-top for new tokens, bottom area for history
   const props = {
     restitution: isHistory ? 0.05 : 0.5,
