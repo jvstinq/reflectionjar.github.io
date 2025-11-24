@@ -17,6 +17,10 @@ function playDropSound() {
   }
 }
 
+// Apply theme
+const activeTheme = localStorage.getItem("rj_active_theme") || "blue";
+applyTheme(activeTheme);
+
 // --- Prompt UI & basic popup handling ---
 let prompts = [];
 let currentPrompt = null;
@@ -180,7 +184,7 @@ function createTokenVisual(displayDate, reflectionData, colorType = "gold", isHi
   return token;
 }
 
-// Utility to remove all token bodies we added
+// Utility to remove all added token bodies
 function clearAllTokenBodies() {
   // We use Composite.allBodies(world) to find bodies that have isToken flag
   const allBodies = Composite.allBodies(world);
@@ -338,6 +342,51 @@ summaryPopup.addEventListener("click", (e) => {
     summaryPopup.style.display = "none";
   }
 });
+
+function applyTheme(themeName) {
+  const themes = {
+    blue: {
+      primary: "#516ea0",
+      hover: "#7199dd",
+      accent: "#f5f7ff",
+      gradientStart: "#a0c4ff",
+      gradientEnd:   "#bde0fe"
+    },
+    pink: {
+      primary: "#ffb7d2",
+      hover: "#ff9fc4",
+      accent: "#fff0f5",
+      gradientStart: "#ffd1e8",
+      gradientEnd:   "#ffe4f2"
+    },
+    green: {
+      primary: "#77d098ff",
+      hover: "#a4dabb",
+      accent: "#f2fbf5",
+      gradientStart: "#c5f5d6",
+      gradientEnd:   "#d7ffe8"
+    },
+    purple: {
+      primary: "#d6c8ff",
+      hover: "#c4b2ff",
+      accent: "#f6f2ff",
+      gradientStart: "#e5d8ff",
+      gradientEnd:   "#f0e6ff"
+    }
+  };
+
+  const t = themes[themeName];
+  if (!t) return;
+
+  document.documentElement.style.setProperty("--primary-color", t.primary);
+  document.documentElement.style.setProperty("--primary-hover", t.hover);
+  document.documentElement.style.setProperty("--bg-accent", t.accent);
+
+  document.documentElement.style.setProperty("--gradient-start", t.gradientStart);
+  document.documentElement.style.setProperty("--gradient-end", t.gradientEnd);
+
+  localStorage.setItem("rj_active_theme", themeName);
+}
 
 
 // --- DOM ready: ensure defaults and rebuild jar ---

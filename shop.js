@@ -1,20 +1,16 @@
+/****************************************************
+ * SHOP INVENTORY + THEME HANDLING
+ ****************************************************/
+
 const RJ_INVENTORY_KEY = "rj_inventory";
 
-// --- Helpers ---
-
-function getReflectionCount() {
-  try {
-    const stored = JSON.parse(localStorage.getItem("reflections") || "[]");
-    return Array.isArray(stored) ? stored.length : 0;
-  } catch (e) {
-    return 0;
-  }
-}
+/* ------------------------------
+   Helpers
+------------------------------ */
 
 function getInventory() {
   try {
-    const inv = JSON.parse(localStorage.getItem(RJ_INVENTORY_KEY) || "[]");
-    return Array.isArray(inv) ? inv : [];
+    return JSON.parse(localStorage.getItem(RJ_INVENTORY_KEY) || "[]");
   } catch (e) {
     return [];
   }
@@ -34,61 +30,98 @@ function setTokens(amount) {
 
 function updateTokenDisplay() {
   const el = document.getElementById("tokenDisplay");
-  if (el) {
-    el.textContent = `Tokens: ${getTokens()}`;
+  if (el) el.textContent = `Tokens: ${getTokens()}`;
+}
+
+/* ----------------------------------------
+   Apply theme on shop load
+---------------------------------------- */
+function loadActiveTheme() {
+  const theme = localStorage.getItem("rj_active_theme") || "blue";
+
+  if (typeof applyTheme === "function") {
+    applyTheme(theme);
   }
 }
 
+/* ----------------------------------------
+   Initialize shop item UI based on inventory
+---------------------------------------- */
 function markOwnedItems() {
-  const inv = getInventory();
+  const inventory = getInventory();
+
   document.querySelectorAll(".shop-item").forEach(card => {
     const name = card.dataset.name;
-    const btn = card.querySelector(".buy-btn");
-    if (!btn) return;
+    const buyBtn = card.querySelector(".buy-btn");
+    const equipBtn = card.querySelector(".equip-btn");
 
-    if (inv.includes(name)) {
-      btn.textContent = "OWNED";
-      btn.disabled = true;
+    if (inventory.includes(name)) {
+      buyBtn.textContent = "OWNED";
+      buyBtn.disabled = true;
+      equipBtn.disabled = false;
     } else {
-      btn.textContent = "BUY";
-      btn.disabled = false;
+      buyBtn.textContent = "BUY";
+      buyBtn.disabled = false;
+      equipBtn.disabled = true;
     }
   });
 }
 
-// --- Purchase Handling ---
+/* ----------------------------------------
+   Purchase + Equip Handlers
+---------------------------------------- */
 
-document.querySelectorAll(".buy-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const card = btn.closest(".shop-item");
-    if (!card) return;
-
+function attachButtonHandlers() {
+  document.querySelectorAll(".shop-item").forEach(card => {
     const name = card.dataset.name;
-    const cost = parseInt(card.dataset.cost, 10) || 1;
+    const theme = card.dataset.theme;
+    const cost = parseInt(card.dataset.cost);
 
-    const available = getTokens();
-    if (available < cost) {
-      alert("Not enough tokens to buy this item.");
-      return;
-    }
+    const buyBtn = card.querySelector(".buy-btn");
+    const equipBtn = card.querySelector(".equip-btn");
 
-    //deduct tokens
-    setTokens(available - cost);
+    /* --- BUY BUTTON --- */
+    buyBtn.addEventListener("click", () => {
+      const tokens = getTokens();
+      const inv = getInventory();
 
-    //add item to inventory
-    const inv = getInventory();
-    if (!inv.includes(name)) {
+      if (tokens < cost) {
+        alert("Not enough tokens.");
+        return;
+      }
+
+      // Charge token + add to inventory
+      setTokens(tokens - cost);
       inv.push(name);
       setInventory(inv);
-    }
 
-    //refresh UI
-    updateTokenDisplay();
-    markOwnedItems();
+      updateTokenDisplay();
+
+      // Update UI
+      buyBtn.textContent = "OWNED";
+      buyBtn.disabled = true;
+      equipBtn.disabled = false;
+    });
+
+    /* --- EQUIP BUTTON --- */
+    equipBtn.addEventListener("click", () => {
+      if (equipBtn.disabled) return;
+      if (!theme) return;
+
+      localStorage.setItem("rj_active_theme", theme);
+
+      if (typeof applyTheme === "function") {
+        applyTheme(theme);
+      }
+
+      alert(`Theme set to ${theme}!`);
+    });
   });
-});
+}
 
-// --- Back Button ---
+/* ----------------------------------------
+   Back Button
+---------------------------------------- */
 
 const backBtn = document.getElementById("backBtn");
 if (backBtn) {
@@ -97,7 +130,11 @@ if (backBtn) {
   });
 }
 
-// --- Init on load ---
+/* ----------------------------------------
+   Initialize Shop Page
+---------------------------------------- */
 
+loadActiveTheme();
 updateTokenDisplay();
+attachButtonHandlers();
 markOwnedItems();
