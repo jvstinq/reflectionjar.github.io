@@ -31,6 +31,11 @@ if ($("writeBtn")) {
 if ($("closePopup")) {
   $("closePopup").addEventListener("click", () => { $("popup").style.display = "none"; });
 }
+$("popup").addEventListener("click", (e) => {
+  if (e.target === $("popup")) {
+    $("popup").style.display = "none";
+  }
+});
 
 // Load prompts (data.json expected)
 fetch("data.json")
