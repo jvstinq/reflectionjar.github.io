@@ -1,3 +1,8 @@
+// ChatGPT API configuration
+const USE_BACKEND_FOR_SUMMARY = true; // Set to true to use ChatGPT for summaries, testing purposes
+const BACKEND_URL = ''; // Backend server URL
+const SUMMARY_THRESHOLD = 2; // Generate summary after this many entries from user
+
 // --- Matter.js imports ---
 const {
   Engine, Render, World, Bodies, Events, Mouse, MouseConstraint,
@@ -576,3 +581,49 @@ document.addEventListener("keydown", (ev) => {
 //   rebuildTokensFromStorage();
 //}
 // (call devClearAll() from console if needed)
+
+// Generate Summary Button Handler 
+const generateSummaryBtn = document.getElementById('generateSummaryBtn');
+if (generateSummaryBtn) {
+  generateSummaryBtn.addEventListener('click', async () => {
+    const reflections = JSON.parse(localStorage.getItem("reflections") || "[]");
+    
+    if (reflections.length === 0) {
+      alert("You haven't made any reflections yet. Start writing to see your summary!");
+      return;
+    }
+    
+    const originalText = generateSummaryBtn.textContent;
+    
+    generateSummaryBtn.disabled = true;
+    generateSummaryBtn.textContent = "Generating...";
+    
+    try {
+      const response = await fetch('/api/summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reflections: reflections
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate summary from server');
+      }
+      
+      const data = await response.json();
+      
+      // Show summary in a nice alert
+      alert('🌟 Your AI-Generated Summary:\n\n' + data.summary);
+      
+    } catch (error) {
+      console.error("Error generating summary:", error);
+      alert("Error generating summary: " + error.message);
+    } finally {
+      generateSummaryBtn.disabled = false;
+      generateSummaryBtn.textContent = originalText;
+    }
+  });
+}
