@@ -183,7 +183,7 @@ function createTokenVisual(displayDate, reflectionData, colorType = "gold", isHi
   markAsToken(token, colorType);
   World.add(world, token);
 
-  // If history token -> give tiny nudge so it "settles" naturally (Option B)
+  // If history token -> give tiny nudge so it "settles" naturally
   if (isHistory) {
     Body.setVelocity(token, { x: (Math.random() - 0.5) * 0.2, y: (Math.random() - 0.5) * 0.2 });
   } else {
@@ -196,7 +196,6 @@ function createTokenVisual(displayDate, reflectionData, colorType = "gold", isHi
 
 // Utility to remove all added token bodies
 function clearAllTokenBodies() {
-  // We use Composite.allBodies(world) to find bodies that have isToken flag
   const allBodies = Composite.allBodies(world);
   for (let b of allBodies) {
     if (b.isToken) {
@@ -207,7 +206,7 @@ function clearAllTokenBodies() {
 
 // --- Persistence & canonical state keys ---
 const REFLECTIONS_KEY = "reflections";
-const TOTAL_TOKENS_KEY = "totalTokens";
+const TOTAL_TOKENS_KEY = "totalTokens";   // GOLD tokens (shop currency)
 const STREAK_KEY = "streak";
 const LASTDATE_KEY = "lastDate";
 const BONUS_KEY = "bonusTokens";
@@ -216,13 +215,14 @@ const BONUS_KEY = "bonusTokens";
 let streak = parseInt(localStorage.getItem(STREAK_KEY), 10) || 0;
 let lastDate = localStorage.getItem(LASTDATE_KEY) || null;
 let bonusTokens = parseInt(localStorage.getItem(BONUS_KEY), 10) || 0;
-let totalTokens = parseInt(localStorage.getItem(TOTAL_TOKENS_KEY), 10) || 0;
+let totalTokens = parseInt(localStorage.getItem(TOTAL_TOKENS_KEY), 10) || 0; // gold tokens
 
 // UI updates
 function updateStreakDisplay() {
   if ($("streakText"))
     $("streakText").textContent = `🔥 Streak: ${streak} day${streak !== 1 ? "s" : ""}`;
 
+  // Old bonusText (if still in DOM); safe no-op if missing
   if ($("bonusText"))
     $("bonusText").textContent = `Bonus Tokens: ${bonusTokens}`;
 
@@ -238,42 +238,66 @@ function updateStreakDisplay() {
   }
 }
 
+// NEW: Gold Tokens, Bonus Tokens, Total Tokens (Silver+Gold)
 function updateTotalTokensDisplay() {
-  if ($("totalTokens")) $("totalTokens").textContent = totalTokens;
-  if ($("tokenDisplay")) $("tokenDisplay").textContent = `Tokens: ${totalTokens}`;
+  const goldTokens = totalTokens;
+
+  // Compute silver tokens from reflections (type === "silver")
+  let silverCount = 0;
+  try {
+    const reflections = JSON.parse(localStorage.getItem(REFLECTIONS_KEY) || "[]");
+    silverCount = reflections.filter(r => r && r.type === "silver").length;
+  } catch (e) {
+    silverCount = 0;
+  }
+
+  const totalAllTokens = goldTokens + silverCount;
+
+  // Main display on index.html
+  if ($("goldTokens")) $("goldTokens").textContent = goldTokens;
+  // 👇 Bonus Tokens now ALWAYS matches silver tokens in the jar
+  if ($("bonusTokensDisplay")) $("bonusTokensDisplay").textContent = silverCount;
+  if ($("totalTokens")) $("totalTokens").textContent = totalAllTokens;
+
+  // Shop header still uses "Tokens" = gold currency
+  if ($("tokenDisplay")) $("tokenDisplay").textContent = `Tokens: ${goldTokens}`;
 }
+
 updateStreakDisplay();
 updateTotalTokensDisplay();
 
-// --- Rebuild the jar to match the canonical state --
-//  - Always render ALL silver reflections from storage as silver tokens
-//  - Render exactly `totalTokens` gold tokens (independent of reflections)
-//  - Place history tokens near bottom, silent, gentle nudge
+// --- Rebuild the jar to match the canonical state ---
+//  - Render silver reflections as silver tokens
+//  - Render exactly `totalTokens` gold tokens
 function rebuildTokensFromStorage() {
-  // remove previous token bodies
   clearAllTokenBodies();
 
   const reflections = JSON.parse(localStorage.getItem(REFLECTIONS_KEY) || "[]");
   const goldCount = parseInt(localStorage.getItem(TOTAL_TOKENS_KEY) || "0", 10) || 0;
 
-  // Spawn silver tokens from reflections where type === 'silver'
-  // We iterate oldest->newest so stacking looks natural
+  // Silver tokens from reflections
   for (let i = 0; i < reflections.length; i++) {
     const ref = reflections[i];
     if (ref.type === "silver") {
-      const displayDate = ref.displayDate || (new Date(ref.dateISO || Date.now()).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" }));
+      const displayDate =
+        ref.displayDate ||
+        (new Date(ref.dateISO || Date.now()).toLocaleDateString("en-US", {
+          month: "2-digit",
+          day: "2-digit"
+        }));
       createTokenVisual(displayDate, { prompt: ref.prompt, text: ref.text }, "silver", true);
     }
   }
 
-  // Spawn gold tokens to exactly match goldCount
-  // We spawn them after silver so they can appear mixed in naturally
+  // Gold tokens = totalTokens
   for (let i = 0; i < goldCount; i++) {
-    const dateStr = new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit" });
+    const dateStr = new Date().toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit"
+    });
     createTokenVisual(dateStr, { prompt: null, text: "Token" }, "gold", true);
   }
 
-  // One engine update to let tokens settle a little
   Engine.update(engine, 50);
 }
 
@@ -316,17 +340,15 @@ function populateSummaryList() {
   }
 
   reflections
-    .sort((a,b) => new Date(b.dateISO) - new Date(a.dateISO))
+    .sort((a, b) => new Date(b.dateISO) - new Date(a.dateISO))
     .forEach(ref => {
 
-      // fallback date logic
       const display =
         ref.displayDate ||
         ref.dateISO ||
         ref.date ||
         "Unknown";
 
-      // Choose preview: prompt > text
       let preview = "";
       if (ref.prompt && ref.prompt.trim() !== "") preview = ref.prompt;
       else preview = ref.text || "";
@@ -439,7 +461,6 @@ function applyTheme(themeName) {
 
 // --- DOM ready: ensure defaults and rebuild jar ---
 window.addEventListener("DOMContentLoaded", () => {
-  // ensure keys exist and are numeric
   if (isNaN(totalTokens)) {
     totalTokens = 0;
     localStorage.setItem(TOTAL_TOKENS_KEY, "0");
@@ -448,13 +469,12 @@ window.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(REFLECTIONS_KEY, JSON.stringify([]));
   }
 
-  // Rebuild visuals
   rebuildTokensFromStorage();
   updateStreakDisplay();
   updateTotalTokensDisplay();
 });
 
-// --- Submit handler (unified logic, Option A) ---
+// --- Submit handler (unified logic) ---
 if ($("submitBtn")) {
   $("submitBtn").addEventListener("click", () => {
     const reflectionTextEl = $("reflectionText");
@@ -477,17 +497,17 @@ if ($("submitBtn")) {
         if (diffDays === 1) streak++;
         else streak = 1;
       }
-    } // else streak unchanged
+    }
 
     // Token awarding
     let tokenColor = "silver";
-    let earnedTokens = 0;
     if (isFirstToday) {
       bonusTokens = Math.floor(streak / 2);
-      earnedTokens = 1 + bonusTokens;
-      totalTokens += earnedTokens;
+      const earnedTokens = 1 + bonusTokens;
+      totalTokens += earnedTokens;   // gold tokens
       tokenColor = "gold";
     } else {
+      bonusTokens += 1;
       tokenColor = "silver";
     }
 
@@ -512,7 +532,7 @@ if ($("submitBtn")) {
     localStorage.setItem(BONUS_KEY, String(bonusTokens));
     localStorage.setItem(TOTAL_TOKENS_KEY, String(totalTokens));
 
-    // Create a visible token for this submission (new token path)
+    // Create a visible token for this submission
     createTokenVisual(dateDisplay, { prompt: currentPrompt, text }, tokenColor, false);
 
     // Update UI and teardown popup
@@ -543,8 +563,8 @@ window.addEventListener("storage", (e) => {
     updateTotalTokensDisplay();
     rebuildTokensFromStorage();
   } else if (e.key === REFLECTIONS_KEY) {
-    // Separated reflections changed externally (unlikely) -> rebuild
     rebuildTokensFromStorage();
+    updateTotalTokensDisplay();
   }
 });
 
@@ -562,7 +582,7 @@ Events.on(mouseConstraint, "mousedown", (event) => {
   }
 });
 
-// --- Debug shortcut: Shift+T to add tokens (remove later) ---
+// --- Debug shortcut: Shift+T to add tokens (dev only) ---
 document.addEventListener("keydown", (ev) => {
   if (ev.shiftKey && (ev.key === "T" || ev.key === "t")) {
     totalTokens += 20;
@@ -573,57 +593,83 @@ document.addEventListener("keydown", (ev) => {
   }
 });
 
-// --- Utility: clear all reflections & tokens (dev only) ---
-// Uncomment below to enable a debug clear button in-page.
-// function devClearAll() {
-//   localStorage.removeItem(REFLECTIONS_KEY);
-//   localStorage.setItem(TOTAL_TOKENS_KEY, "0");
-//   rebuildTokensFromStorage();
-//}
-// (call devClearAll() from console if needed)
+// ------------- Generate Summary Button Handler -------------
+const generateSummaryBtn = document.getElementById("generateSummaryBtn");
 
-// Generate Summary Button Handler 
-const generateSummaryBtn = document.getElementById('generateSummaryBtn');
 if (generateSummaryBtn) {
-  generateSummaryBtn.addEventListener('click', async () => {
-    const reflections = JSON.parse(localStorage.getItem("reflections") || "[]");
-    
+  generateSummaryBtn.addEventListener("click", async () => {
+    const reflections = JSON.parse(localStorage.getItem(REFLECTIONS_KEY) || "[]");
+
     if (reflections.length === 0) {
       alert("You haven't made any reflections yet. Start writing to see your summary!");
       return;
     }
-    
+
     const originalText = generateSummaryBtn.textContent;
-    
     generateSummaryBtn.disabled = true;
     generateSummaryBtn.textContent = "Generating...";
-    
+
     try {
-      const response = await fetch('/api/summary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          reflections: reflections
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate summary from server');
+      let summaryText;
+
+      if (USE_BACKEND_FOR_SUMMARY) {
+        // Call your Vercel function /api/summary (or custom BACKEND_URL if set)
+        const endpoint = BACKEND_URL || "/api/summary";
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ reflections })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        summaryText =
+          data.summary ||
+          data.message ||
+          JSON.stringify(data, null, 2);
+      } else {
+        // No backend? Use local summary instead
+        summaryText = buildLocalSummary(reflections);
       }
-      
-      const data = await response.json();
-      
-      // Show summary in a nice alert
-      alert('🌟 Your AI-Generated Summary:\n\n' + data.summary);
-      
-    } catch (error) {
-      console.error("Error generating summary:", error);
-      alert("Error generating summary: " + error.message);
+
+      alert("🌟 Your reflection summary:\n\n" + summaryText);
+    } catch (err) {
+      console.error("Error generating summary:", err);
+
+      // Fallback: local summary so the button still feels useful
+      const fallback = buildLocalSummary(reflections);
+      alert(
+        "Couldn't reach the AI summary backend, but here's a quick summary instead:\n\n" +
+        fallback
+      );
     } finally {
       generateSummaryBtn.disabled = false;
       generateSummaryBtn.textContent = originalText;
     }
   });
+}
+
+// ------------- Local summary fallback -------------
+function buildLocalSummary(reflections) {
+  const count = reflections.length;
+  const recent = reflections.slice(-3); // last up to 3 reflections
+
+  const dateList = recent
+    .map(r => r.displayDate || r.dateISO || r.date || "Unknown date")
+    .join(", ");
+
+  const snippets = recent
+    .map(r => "- " + (r.text || "").slice(0, 140))
+    .join("\n");
+
+  return (
+    `You have written ${count} reflection${count === 1 ? "" : "s"}.\n` +
+    (dateList ? `Recent dates: ${dateList}\n\n` : "\n") +
+    `Recent snippets:\n${snippets || "(no text found)"}`
+  );
 }
