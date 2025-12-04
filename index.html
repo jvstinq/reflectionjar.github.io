@@ -7,41 +7,43 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="streak-counter">
-    <div id="streakText">🔥 Streak: 0 day</div>
-    <div id="streakFires" class="streak-fires"></div>
-  </div>
-
-  <!-- UPDATED: Gold Tokens + Bonus Tokens + Total Tokens (Silver + Gold) -->
-  <div class="total-tokens">
-    Gold Tokens: <span id="goldTokens">0</span><br>
-    Bonus Tokens: <span id="bonusTokensDisplay">0</span><br>
-    Total Tokens: <span id="totalTokens">0</span>
-  </div>
-
-  <div class="container">
-    <h1>Reflection Jar</h1>
-    <button id="writeBtn">🖊️ Write Entry</button>
-
-    <div id="jar-container" style ="position: relative;">
-        <svg id="jar-svg" viewBox="0 0 200 300">
-            <path id="jar-shape"
-            d="M 84 30 Q 72 30 72 50 L 72 254 Q 72 279 158.4 281 Q 246 280 246 255 L 246 49 Q 246 30 235.2 30 Q 235.2 19 235.2 19 Q 110.4 19 84 19 Z"
-            fill="rgba(255, 255, 255, 0.3)"
-            stroke="rgba(255, 255, 255, 0.5)"
-            stroke-width="4"/>
-        </svg>
-
-        <!-- Canvas for Matter.js tokens -->
-        <canvas id="jar-canvas" width="400" height="450" style="position:absolute; top:0; left:0; pointer-events:none;"></canvas>
+  <div id="main-scale-wrapper">
+    <div class="streak-counter">
+      <div id="streakText">🔥 Streak: 0 day</div>
+      <div id="streakFires" class="streak-fires"></div>
     </div>
 
-    <div class="button-row">
-      <button id="shopBtn">🛍️ Shop</button>
-      <button id="summaryBtn">📖 View Entries</button>
+    <!-- UPDATED: Gold Tokens + Bonus Tokens + Total Tokens (Silver + Gold) -->
+    <div class="total-tokens">
+      Gold Tokens: <span id="goldTokens">0</span><br>
+      Bonus Tokens: <span id="bonusTokensDisplay">0</span><br>
+      Total Tokens: <span id="totalTokens">0</span>
+    </div>
+
+    <div class="container">
+      <h1>Reflection Jar</h1>
+      <button id="writeBtn">🖊️ Write Entry</button>
+
+      <div id="jar-container" style ="position: relative;">
+          <svg id="jar-svg" viewBox="0 0 200 300">
+              <path id="jar-shape"
+              d="M 84 30 Q 72 30 72 50 L 72 254 Q 72 279 158.4 281 Q 246 280 246 255 L 246 49 Q 246 30 235.2 30 Q 235.2 19 235.2 19 Q 110.4 19 84 19 Z"
+              fill="rgba(255, 255, 255, 0.3)"
+              stroke="rgba(255, 255, 255, 0.5)"
+              stroke-width="4"/>
+          </svg>
+
+          <!-- Canvas for Matter.js tokens -->
+          <canvas id="jar-canvas" width="400" height="450" style="position:absolute; top:0; left:0; pointer-events:none;"></canvas>
+      </div>
+
+      <div class="button-row">
+        <button id="shopBtn">🛍️ Shop</button>
+        <button id="summaryBtn">📖 View Entries</button>
+      </div>
     </div>
   </div>
-
+    
   <div id="popup" class="popup">
     <div class="popup-content">
       <span id="closePopup" class="close">&times;</span>

@@ -146,7 +146,7 @@ button:hover {
 
 .popup-content {
   background: #ffffff;
-  padding: 28px 32px;
+  padding: 32px 32px;
   border-radius: 16px;
   max-width: 650px;   /* bigger popup */
   width: 95%;
@@ -169,7 +169,7 @@ textarea {
   margin-bottom: 20px;
   border-radius: 8px;
   border: 1px solid var(--light-border);
-  padding: 12px;
+  padding: 8px;
   resize: none;
   font-size: 1rem;       /* larger input text */
   line-height: 1.4;
@@ -244,9 +244,12 @@ textarea::placeholder {
 
 #tutorialBtn {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 40px;
+  right: 55px;
   z-index: 10000;
+
+  transform: scale(1.35);
+  transform-origin: center;
 }
 
 .close-btn {
@@ -558,4 +561,17 @@ textarea::placeholder {
 }
 #popup .close:hover {
   color: #000;
+}
+
+/* ================================================
+   Scale the main UI
+   ================================================ */
+#main-scale-wrapper {
+  transform: scale(1.35);
+  transform-origin: top center;
+}
+
+body {
+  padding-right: 50px;
+  padding-left: 50px;
 }
