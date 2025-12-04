@@ -20,8 +20,8 @@
         "heading": "🌱 Daily Reflections",
         "items": [
           "Write as many reflections as you want each day.",
-          "Only the first submission counts toward your streak and earns tokens.",
-          "There's an option for free-write or guided prompt"
+          "Only the first submission counts toward your streak and earns gold tokens.",
+          "There's an option for free-write or guided prompt."
         ]
       },
       {
@@ -35,8 +35,9 @@
       {
         "heading": "💰 Tokens",
         "items": [
-          "Earn tokens on your first reflection of the day.",
-          "Tokens are used to buy cosmetics in shop."
+          "Earn gold tokens on your first reflection of the day.",
+          "Gold tokens are used to buy cosmetics in shop.",
+          "Gray tokens are extra entries."
         ]
       },
       {
