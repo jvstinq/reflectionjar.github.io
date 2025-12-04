@@ -4,6 +4,15 @@
 
 const RJ_INVENTORY_KEY = "rj_inventory";
 
+/* Make Blue theme owned by default */
+(function ensureDefaultBlueTheme() {
+  const inv = JSON.parse(localStorage.getItem(RJ_INVENTORY_KEY) || "[]");
+  if (!inv.includes("theme-blue")) {
+    inv.push("theme-blue");
+    localStorage.setItem(RJ_INVENTORY_KEY, JSON.stringify(inv));
+  }
+})();
+
 /* ------------------------------
    Helpers
 ------------------------------ */

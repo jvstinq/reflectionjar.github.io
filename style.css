@@ -475,6 +475,7 @@ textarea::placeholder {
   width: auto;
   object-fit: contain;
   margin-bottom: 8px;
+  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.18));
 }
 
 .shop-item h3 {
@@ -544,6 +545,16 @@ textarea::placeholder {
   gap: 8px;
 }
 
+.equip-btn {
+  background-color: var(--text-color);  
+  color: var(--white);
+  border-radius: 6px;
+}
+.equip-btn:hover {
+  background-color: #1f2937;            
+  transform: scale(1.05);
+}
+
 .equip-btn:disabled {
   opacity: 0.4;
   cursor: default;
@@ -561,6 +572,12 @@ textarea::placeholder {
 }
 #popup .close:hover {
   color: #000;
+}
+
+.shop-buttons button {
+  width: 90px;        
+  padding: 8px 0;
+  font-size: 0.9rem;
 }
 
 /* ================================================
