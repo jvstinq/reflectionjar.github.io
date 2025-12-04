@@ -449,6 +449,29 @@ function showReflectionDetails(ref) {
   summaryDate.textContent = ref.displayDate || ref.dateISO;
   summaryPrompt.textContent = ref.prompt ? `Prompt: ${ref.prompt}` : "";
   summaryText.textContent = ref.text;
+
+  // Normal entry view: left-aligned text
+  summaryText.style.textAlign = "left";
+  summaryText.style.whiteSpace = "pre-wrap";
+}
+
+function showSummaryResult(summaryBody, isFallback = false) {
+  if (!summaryBody) return;
+
+  // Make sure the right panel is visible
+  summaryEmpty.style.display = "none";
+  summaryDetails.style.display = "block";
+
+  // Header + subtext
+  summaryDate.textContent = isFallback ? "Quick Summary" : "AI Summary";
+  summaryPrompt.textContent = isFallback
+    ? "Generated locally because the AI summary service was unavailable."
+    : "AI-generated summary of your reflections.";
+
+  // Put the summary text in the same <p id="summaryText">
+  summaryText.textContent = summaryBody;
+  summaryText.style.whiteSpace = "pre-wrap";
+  summaryText.style.textAlign = "center";   // centered like you wanted
 }
 
 // Delete button handler
@@ -691,7 +714,13 @@ if (generateSummaryBtn) {
       return;
     }
 
-    // play sound on click
+    selectedReflectionKey = null;
+    if (deleteEntryBtn) deleteEntryBtn.disabled = true;
+    document.querySelectorAll(".summary-list-item").forEach(el =>
+      el.classList.remove("active")
+    );
+
+    // Play the generate summary sound
     playGenerateSummarySound();
 
     const originalText = generateSummaryBtn.textContent;
@@ -699,7 +728,7 @@ if (generateSummaryBtn) {
     generateSummaryBtn.textContent = "Generating...";
 
     try {
-      let summaryText;
+      let summaryBody;
 
       if (USE_BACKEND_FOR_SUMMARY) {
         // Call your Vercel function /api/summary (or custom BACKEND_URL if set)
@@ -717,25 +746,23 @@ if (generateSummaryBtn) {
         }
 
         const data = await response.json();
-        summaryText =
+        summaryBody =
           data.summary ||
           data.message ||
           JSON.stringify(data, null, 2);
       } else {
         // No backend? Use local summary instead
-        summaryText = buildLocalSummary(reflections);
+        summaryBody = buildLocalSummary(reflections);
       }
 
-      alert("🌟 Your reflection summary:\n\n" + summaryText);
+      // Show AI summary inside the popup, centered
+      showSummaryResult(summaryBody, false);
     } catch (err) {
       console.error("Error generating summary:", err);
 
-      // Fallback: local summary so the button still feels useful
+      // Fallback: local quick summary, also in the popup
       const fallback = buildLocalSummary(reflections);
-      alert(
-        "Couldn't reach the AI summary backend, but here's a quick summary instead:\n\n" +
-        fallback
-      );
+      showSummaryResult(fallback, true);
     } finally {
       generateSummaryBtn.disabled = false;
       generateSummaryBtn.textContent = originalText;
